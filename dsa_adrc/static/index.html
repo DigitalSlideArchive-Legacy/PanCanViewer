@@ -392,10 +392,10 @@
 
     $(function() {
         // initialize the image viewer and annotation state
-        viewer = OpenSeadragon({
-            id: "image_zoomer",
-            prefixUrl: "images/",
-        });
+  //DG       viewer = OpenSeadragon({
+   //DG         id: "image_zoomer",
+   //DG         prefixUrl: "images/",
+   //DG     });
 
         viewer.addHandler('open-failed', function(evt) {
             console.log('tile source opening failed', evt);
@@ -406,8 +406,8 @@
             var message = bounds.x + ':' + bounds.y + ':' + bounds.width + ':' + bounds.height;
             $('.wsi-toolbar').text(message);
         });
-
-        var annotationState = window.annotationState = new AnnotationState();
+ 
+       var annotationState = window.annotationState = new AnnotationState();
         annotationState.setSeadragonViewer(viewer);
         annotation_setup_code(annotationState);
 
@@ -451,28 +451,9 @@
             }
         });
 
-        $('#query_db_entry').change(function() {
-            //            query_db($("#query_db_entry option:selected").val());
-            new_query_db( pid,   $("#query_db_entry option:selected").text()); //Since I am changing the way the drop down works I am now using text instead of val..
-
 
         });
 
-        $('#report_bad_image_btn').click(function() {
-            var url = '/api/v1/report_bad_image';
-            $.ajax({
-                type: "POST",
-                url: url,
-                data: {
-                    filename: current_filename,
-                    slide_url: current_slide_url,
-                    data_group: recent_study_name
-
-                },
-                async: false
-            });
-        })
-    });
 
 
 
@@ -612,23 +593,13 @@
     }
 
 
-    function load_path_report(pid) {
-        /* Given the patient ID, this will call the API and see if theres a pathology report */
-
-        console.log('Should load path report for' + pid);
-        $("#path_report_dialog").empty();
-        $("#path_report_dialog").html(`<embed src="http://cancer.digitalslidearchive.emory.edu/api/v1/path_reports/${pid}" width="600" height="575" >`);
-
-    }
 
     function load_image(filename, image_url) {
 
         if (sel_image_expanded) {
             $('#sel_image_frame').addClass('span3');
             $('#sel_image_frame').removeClass('span12');
-
             $('#zoom_frame').show();
-
             load_thumbnail_data(recent_study_name);
             sel_image_expanded = false;
         }
