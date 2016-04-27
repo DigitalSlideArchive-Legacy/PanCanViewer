@@ -40,6 +40,7 @@
                 <script src="js/openseadragon-imaginghelper.min.js"></script>
                 <script src="js/openseadragon-viewerinputhook.min.js"></script>
                 <script src="js/knockout-3.1.0.js"></script>
+              <!--   <script src="js/viewer.js"></script>-->
 
 
     <style>
@@ -203,6 +204,7 @@
                     <input type="button" id="show_debug" value="Show Debug Info" class="btn btn-small btn-inverse">
                     <input type="button" id="show_annotator" value="Draw Tools" class="btn btn-small btn-inverse" disabled>
                     <input type="button" id="show_metadata" value="Query Metadata" class="btn btn-small btn-inverse" disabled>
+			<input type="button" id="btn_1" value="Show Segmentation" class="btn btn-default btn-sm" onClick="viewSegmentation()">
                 </div>
                 <div id="image_zoomer"></div>
             </div>
@@ -473,46 +475,6 @@
     });
 
 
-    /* Current data sources returns all the data for the patient as separate elements  in an array , and it just key/value pairs 
-           I should push the data to patient_data[pid][i]['data']  if I wnat to use this functionalit
-     http://node15.cci.emory.edu/DSA_LiveDev/php/lzhan_fetch.php?pid=TCGA-OR-A5J1  */
-
-    function new_query_db(pid,csv_datasrc) {
-        //Check and see if I alrady have the data or not for this database
-    	if (!patient_data.hasOwnProperty(pid))  {  patient_data[pid] = {}; }  
-    		//http://digitalslidearchive.emory.edu:5001/api/v1/clin_datasources/nationwidechildrens.org_biospecimen_slide_acc/TCGA-OR-A5J3-01A
-        if( !patient_data[pid][csv_datasrc] ) { console.log('need data')  }
-        $.getJSON( '/api/v1/clin_datasources/'+csv_datasrc+'/'+pid ).complete( function(data) {  
-                                       console.log(data.responseJSON);
-                                       patient_data[pid][csv_datasrc] = data.responseJSON;
-
-
-        //This needs major refactor
-        $('#query_db_table_div').html('<table cellpadding="0" cellspacing="0" border="0" class="display" id="query_db_table"></table>');
-        $('#query_db_table').dataTable({
-            "aaData": patient_data[pid][csv_datasrc]['data'],
-            "bLengthChange": false,
-            "bSort": false,
-            "bSortClasses": false,
-            "iDisplayLength": 10,
-            "bDeferRender": true,
-            "aoColumns": [{
-                "sTitle": "Key",
-                "sClass": "left",
-                "sType": "html"
-            }, {
-                "sTitle": "Value",
-                "sClass": "left",
-                "sType": "html"
-            }]
-        });
-
-    
-  });
-
-    }
-
-
 
     /*
      New code for loading in image data from the mongo database
@@ -676,38 +638,16 @@
 
 
         //Once an image is selected, buttons become clickable depending on the data source
-        $('#show_annotator').removeAttr('disabled');
-        $("#show_metadata").removeAttr('disabled');
         $('#show_filter').removeAttr('disabled');
         current_filename = filename;
         current_slide_url = image_url;
-        $('#report_bad_image_btn').removeAttr('disabled');
      	$("#status_bar").text("Current image:"+current_filename); //update status bar to show current image name
-
 
         /// I am now loading the database function here..
         pid = filename.substring(0, 12);
 
         /* Ill get the path report here */
-        load_path_report(pid);
 
-        $.getJSON('/api/v1/clin_datasources/' + recent_study_name).complete(function(data) {
-        	if (!patient_data.hasOwnProperty(pid))  {  patient_data[pid] = {}; }  
-            // console.log(data.responseJSON) 
-            $("#query_db_entry").empty(); //Clear the current select options
-            data_sources = data.responseJSON["Filtered_Source_List"]; //For now I am only exposing a subclass of CSV files as theere are lots of not relevant ones
-            console.log(data_sources);
-            $.each(data_sources, function(idx, val) {
-                //Now append these to an option list
-                $("#query_db_entry").append(`<option id="${idx}" value="${idx}">${val}</option">`);
-                patient_data[pid][val] = {};  //At this Point I have not retrieved info on this entry 
-
-            })
-        })
-
-
-        //I also need to query the database and grab some basic data..
-        //            $('#query_db').removeAttr('disabled');
 
     }
 
