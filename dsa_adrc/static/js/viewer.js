@@ -64,6 +64,9 @@ var classifierSession = false;
 //		load the first slide
 //		Register event handlers
 //
+
+
+
 $(function() {
 	
 	slideReq = $_GET('slide');
@@ -72,10 +75,27 @@ $(function() {
 	// We will load the tile pyramid after the slide list is loaded
 	//
 	viewer = new OpenSeadragon.Viewer({ showNavigator: true, id: "image_zoomer", prefixUrl: "images/", animationTime: 0.1});
+
+   viewer.addHandler('open-failed', function(evt) {
+            console.log('tile source opening failed', evt);
+        })
+
+
+        viewer.addHandler('animation', function() {
+            var bounds = viewer.viewport.getBounds();
+            var message = bounds.x + ':' + bounds.y + ':' + bounds.width + ':' + bounds.height;
+            $('.wsi-toolbar').text(message);
+        });
+
+
 	imgHelper = viewer.activateImagingHelper({onImageViewChanged: onImageViewChanged});
     viewerHook = viewer.addViewerInputHook({ hooks: [
                     {tracker: 'viewer', handler: 'clickHandler', hookHandler: onMouseClick}
             ]});
+
+
+
+	console.log('rocking out so far...')
 	
 	annoGrpTransformFunc = ko.computed(function() { 
 										return 'translate(' + svgOverlayVM.annoGrpTranslateX() +

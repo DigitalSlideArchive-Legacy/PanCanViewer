@@ -40,7 +40,7 @@
                 <script src="js/openseadragon-imaginghelper.min.js"></script>
                 <script src="js/openseadragon-viewerinputhook.min.js"></script>
                 <script src="js/knockout-3.1.0.js"></script>
-              <!--   <script src="js/viewer.js"></script>-->
+                <script src="js/viewer.js"></script>
 
 
     <style>
@@ -206,7 +206,22 @@
                     <input type="button" id="show_metadata" value="Query Metadata" class="btn btn-small btn-inverse" disabled>
 			<input type="button" id="btn_1" value="Show Segmentation" class="btn btn-default btn-sm" onClick="viewSegmentation()">
                 </div>
-                <div id="image_zoomer"></div>
+<div class="row-fluid"> <!-- Slide viewer -->
+                                <div id="imageViewerContainer" class="relative-fill-container">
+                                        <div id="image_zoomer" class="openseadragon-view"></div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="overlaySvg" data-bind="withL svgOverlayVM"
+                                                 visibility="hidden" pointer-events="none" zoomAndPan="disable">
+                                                <defs></defs>
+                                                <!-- TODO - Can't get the binding to work with the transform function.
+                                                         Currently applying the transform manually in onImageViewChanged
+                                                -->
+                                                <g id="annoGrp" class="svgAnnoGrp" data-bind="attr: {transform: annoGrpTransformFunc}">
+                                                        <g id="anno"></g>
+                                                </g>
+                                        </svg>
+                                </div>
+                        </div>
+
             </div>
         </div>
     </div>
@@ -392,21 +407,7 @@
 
     $(function() {
         // initialize the image viewer and annotation state
-  //DG       viewer = OpenSeadragon({
-   //DG         id: "image_zoomer",
-   //DG         prefixUrl: "images/",
-   //DG     });
 
-        viewer.addHandler('open-failed', function(evt) {
-            console.log('tile source opening failed', evt);
-        });
-
-        viewer.addHandler('animation', function() {
-            var bounds = viewer.viewport.getBounds();
-            var message = bounds.x + ':' + bounds.y + ':' + bounds.width + ':' + bounds.height;
-            $('.wsi-toolbar').text(message);
-        });
- 
        var annotationState = window.annotationState = new AnnotationState();
         annotationState.setSeadragonViewer(viewer);
         annotation_setup_code(annotationState);
@@ -439,8 +440,6 @@
         });
         console.log(mousetracker);
 
-
-        // $('#sel_image_arrow').click(sel_image_expand);
 
         $('#data_group').change(function() {
             if (!sel_image_expanded) {
