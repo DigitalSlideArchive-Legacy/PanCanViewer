@@ -175,7 +175,8 @@ $(function() {
 
 	// get slide host info
 	//
-	$.ajax({
+
+  /*	$.ajax({
 		url: "php/getSession.php",
 		data: "",
 		dataType: "json",
@@ -212,7 +213,7 @@ $(function() {
 			updateDatasetList();
 		}
 	});
-
+*/
 	
 	// Set the update handlers for the selectors
 	$("#slide_sel").change(updateSlide);
@@ -625,7 +626,7 @@ function updateSeg() {
 		bottom = statusObj.dataportBottom() + height;
 		 		
 		var class_sel = document.getElementById('classifier_sel');
-
+                console.log('should be doing stuff to update the svg layer in here...');
 	    $.ajax({
 			type: "POST",
        	 	url: "db/getnuclei.php",
@@ -660,11 +661,13 @@ function updateSeg() {
                     segGrp = document.createElementNS("http://www.w3.org/2000/svg", "g");
                     segGrp.setAttribute('id', 'segGrp');
                     annoGrp.appendChild(segGrp);
-
-
+						console.log('i hope i found data???');
+						console.log(data);
 					for( cell in data ) {
 						ele = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-						
+						console.log(cell);
+						console.log('are there any celllllls???');
+						console.log(data[cell],"is the cell data i think?");
 						ele.setAttribute('points', data[cell][0]);
 						ele.setAttribute('id', 'N' + data[cell][1]);
 						ele.setAttribute('stroke', data[cell][2]);
