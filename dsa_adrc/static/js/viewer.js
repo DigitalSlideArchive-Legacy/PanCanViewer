@@ -66,6 +66,40 @@ var classifierSession = false;
 //
 
 
+function contourdata_to_shape(contours, img_width) {
+    scale_factor = 1;
+    polygon_list = [];
+
+    //Openseadragon uses the image width for bo the x and y scale factor... probably should rename this pixel factor
+    x_scale_factor = 1.0 / img_width;
+    y_scale_factor = 1.0 / img_width;
+
+    $.each(contours, function(index, contour) {
+        coord_info = contour.geometry.coordinates;
+
+        coord_string = "";
+        $.each(coord_info, function(k, v) {
+                coord_string += `${(v[0]* x_scale_factor ) },${ ( v[1] * y_scale_factor) } `;
+            }) // the |0 made them all integers
+
+        polygon_svg_str = `<polygon points="${coord_string}" style="fill:${colours[ random(9)]};stroke;purple;stroke-width:1;opacity:0.5" id="tile${contour.properties.labelindex}" class="tileClass" />`;
+        labelindex = contour.properties.labelindex;
+
+        polygon_list.push({
+            'coords': coord_string,
+            'labelindex': contour.properties.labelindex
+        });
+    });
+
+    //Need to add the below function to a callback function for above..
+    $(".tileClass").hover(function() {
+        //console.log(this.id)
+    });
+
+    return polygon_list;
+
+}
+
 
 $(function() {
 	
@@ -93,9 +127,9 @@ $(function() {
                     {tracker: 'viewer', handler: 'clickHandler', hookHandler: onMouseClick}
             ]});
 
+dg_svg_layer = viewer.svgOverlay(); 
 
-
-	console.log('rocking out so far...')
+	//console.log('rocking out so far...')
 	
 	annoGrpTransformFunc = ko.computed(function() { 
 										return 'translate(' + svgOverlayVM.annoGrpTranslateX() +
@@ -107,6 +141,7 @@ $(function() {
 	// Image handlers
 	//	
 	viewer.addHandler('open', function(event) {
+  		console.log('Image has been opened');
 		osdCanvas = $(viewer.canvas);
 		statusObj.haveImage(true);
 
@@ -123,6 +158,8 @@ $(function() {
 
 
 	viewer.addHandler('close', function(event) {
+		osdCanvas = $(viewer.canvas);
+
 		statusObj.haveImage(false);
 		
         osdCanvas.off('mouseenter.osdimaginghelper', onMouseEnter);
@@ -140,7 +177,7 @@ $(function() {
 			if( statusObj.scaleFactor() > 0.5 ) {
 
 
-				console.log('should be showing objects now..');
+				//console.log('should be showing objects now..');
 
 				// Zoomed in, show boundaries hide heatmap
 				$('#anno').show();
@@ -569,6 +606,8 @@ function updateHeatmap() {
 //
 //
 function onImageViewChanged(event) {
+        console.log("should be updating the SVG transformation");
+
 	var boundsRect = viewer.viewport.getBounds(true);
 
 	// Update viewport information. dataportXXX is the view port coordinates
@@ -626,7 +665,7 @@ function updateSeg() {
 		bottom = statusObj.dataportBottom() + height;
 		 		
 		var class_sel = document.getElementById('classifier_sel');
-                console.log('should be doing stuff to update the svg layer in here...');
+                //console.log('should be doing stuff to update the svg layer in here...');
 	    $.ajax({
 			type: "POST",
        	 	url: "db/getnuclei.php",
@@ -661,13 +700,46 @@ function updateSeg() {
                     segGrp = document.createElementNS("http://www.w3.org/2000/svg", "g");
                     segGrp.setAttribute('id', 'segGrp');
                     annoGrp.appendChild(segGrp);
-						console.log('i hope i found data???');
-						console.log(data);
+						//console.log('i hope i found data???');
+						//console.log(data);
+
+
+   //  This will iterate through all the tiles and color them a different color to show the tile overlays
+//    $(".tileClass").remove();
+  //  my_points = contourdata_to_shape(new_geodata, img_width);
+    //This generates the pretty multicolor tile image
+   // $.each(my_points, function(k, point_list) {
+   // });
+
+					for ( cell in data )
+
+					{
+					console.log(data[cell]);
+				//dg_svg_layer
+		//I need to rescale the nuclei from 0/1
+                ptData = data[cell][0]
+                console.log(data[cell][0]);
+
+		ptList = ptData.split(" ");
+
+
+	imgWidth = 125000;
+	console.log(ptList,ptData);
+	reCast_Pts = ""; $.each(ptList, function(k,v) {  xy = v.split(','); rc = ' '+ ( xy[0]/imgWidth).toString() + ',' + (xy[1]/imgWidth).toString(); reCast_Pts+= rc; } ); console.log(reCast_Pts)
+        //### I am better off recasting the poitns on the server side..
+	d3.select(dg_svg_layer.node()).append("polygon").attr("points", reCast_Pts).style('fill', 'none').attr('opacity', 0.5).attr('class', 'tileClass').attr('id', 'N' + data[cell][1]).attr('stroke','aqua');
+		
+
+//        d3.select(svg_layer.node()).append("polygon").attr("points", point_list.coords).style('fill', 'none').attr('opacity', 0.5).attr('class', 'tileClass').attr('id', 'tile' + point_list.labelindex)
+
+					}
+
+
 					for( cell in data ) {
 						ele = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-						console.log(cell);
-						console.log('are there any celllllls???');
-						console.log(data[cell],"is the cell data i think?");
+						//console.log(cell);
+						//console.log('are there any celllllls???');
+						//console.log(data[cell],"is the cell data i think?");
 						ele.setAttribute('points', data[cell][0]);
 						ele.setAttribute('id', 'N' + data[cell][1]);
 						ele.setAttribute('stroke', data[cell][2]);
