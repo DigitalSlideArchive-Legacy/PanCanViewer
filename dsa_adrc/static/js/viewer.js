@@ -24,6 +24,8 @@
 //	DAMAGE.
 //
 //
+console.log("loading viewer.js");
+
 var annoGrpTransformFunc;
 var IIPServer="";
 var slideCnt = 0;
@@ -54,8 +56,6 @@ var uncertMin = 0.0, uncertMax = 0.0, classMin = 0.0, classMax = 0.0;
 
 var classifierSession = false;
 
-
-
 //
 //	Initialization
 //	
@@ -64,7 +64,6 @@ var classifierSession = false;
 //		load the first slide
 //		Register event handlers
 //
-
 
 function contourdata_to_shape(contours, img_width) {
     scale_factor = 1;
@@ -100,7 +99,6 @@ function contourdata_to_shape(contours, img_width) {
 
 }
 
-
 $(function() {
 	
 	slideReq = $_GET('slide');
@@ -132,10 +130,9 @@ dg_svg_layer = viewer.svgOverlay();
 	//console.log('rocking out so far...')
 	
 	annoGrpTransformFunc = ko.computed(function() { 
-										return 'translate(' + svgOverlayVM.annoGrpTranslateX() +
-										', ' + svgOverlayVM.annoGrpTranslateY() +
-										') scale(' + svgOverlayVM.annoGrpScale() + ')';
-									}, this); 
+	return 'translate(' + svgOverlayVM.annoGrpTranslateX() +
+		', ' + svgOverlayVM.annoGrpTranslateY() +
+		') scale(' + svgOverlayVM.annoGrpScale() + ')'	}, this); 
 	
 	//
 	// Image handlers
@@ -156,10 +153,8 @@ dg_svg_layer = viewer.svgOverlay();
 	});
 
 
-
 	viewer.addHandler('close', function(event) {
 		osdCanvas = $(viewer.canvas);
-
 		statusObj.haveImage(false);
 		
         osdCanvas.off('mouseenter.osdimaginghelper', onMouseEnter);
@@ -168,14 +163,10 @@ dg_svg_layer = viewer.svgOverlay();
 
 		osdCanvas = null;
 	});
-
 	
 	viewer.addHandler('animation-finish', function(event) {
-
 		if( segDisplayOn ) {
-		
 			if( statusObj.scaleFactor() > 0.5 ) {
-
 
 				//console.log('should be showing objects now..');
 
@@ -360,8 +351,6 @@ function updateDatasetList() {
 
 
 
-
-
 //
 //	Updates the list of available slides for the current dataset
 //
@@ -409,8 +398,6 @@ function updateSlideList() {
 		}
 	});
 }
-
-
 
 
 
@@ -1041,17 +1028,11 @@ function go() {
 
 		// Zoom in all the way
 		viewer.viewport.zoomTo(viewer.viewport.getMaxZoom());
-
 		// Move to nucei		
 		imgHelper.centerAboutLogicalPoint(new OpenSeadragon.Point(imgHelper.dataToLogicalX(pannedX), 
-															  imgHelper.dataToLogicalY(pannedY)));
 		panned = true;
 	}	
 }
-
-
-
-
 
 
 
@@ -1063,8 +1044,6 @@ function $_GET(name) {
 	var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
 	return match && decodeURIComponent(match[1].replace(/\+/g,' ')); 
 }
-
-
 
 
 
@@ -1094,8 +1073,6 @@ var statusObj = {
 	dataportBottom: ko.observable(0),
 	samplesToFix: ko.observable(0)
 };
-
-
 var svgOverlayVM = {
 	annoGrpTranslateX:	ko.observable(0.0),
 	annoGrpTranslateY:	ko.observable(0.0),
@@ -1114,5 +1091,3 @@ var vm = {
 // and mouse positions
 //
 ko.applyBindings(vm);
-
-
