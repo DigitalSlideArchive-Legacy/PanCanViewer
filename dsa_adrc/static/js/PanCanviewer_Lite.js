@@ -186,43 +186,43 @@ $(function() {
 	// get slide host info
 	//
 
-  	$.ajax({
-		url: seg_base_url +"php/getSession.php",
-		data: "",
-		dataType: "json",
-		success: function(data) {
+ //  	$.ajax({
+	// 	url: seg_base_url +"php/getSession.php",
+	// 	data: "",
+	// 	dataType: "json",
+	// 	success: function(data) {
 			
-			uid = data['uid'];
-			classifier = data['className'];
-			posClass = data['posClass'];
-			negClass = data['negClass'];
-			IIPServer = data['IIPServer'];
-			curDataset = data['dataset'];
+	// 		uid = data['uid'];
+	// 		classifier = data['className'];
+	// 		posClass = data['posClass'];
+	// 		negClass = data['negClass'];
+	// 		IIPServer = data['IIPServer'];
+	// 		curDataset = data['dataset'];
 			
-			// Don't display the legend until a classifier is selected
-			$('#legend').hide();
+	// 		// Don't display the legend until a classifier is selected
+	// 		$('#legend').hide();
 
-			if( uid === null ) {
-				// No active session, don;t allow navigation to select & visualize
-				$('#nav_select').hide();
-				$('#nav_visualize').hide();
-				$('#nav_heatmaps').hide();
-			} else {
-				// Active session, dataset selection not allowed
-				document.getElementById('dataset_sel').disabled = true
+	// 		if( uid === null ) {
+	// 			// No active session, don;t allow navigation to select & visualize
+	// 			$('#nav_select').hide();
+	// 			$('#nav_visualize').hide();
+	// 			$('#nav_heatmaps').hide();
+	// 		} else {
+	// 			// Active session, dataset selection not allowed
+	// 			document.getElementById('dataset_sel').disabled = true
 				
-				// No report generation during active session
-				$('#nav_reports').hide();
-			}
+	// 			// No report generation during active session
+	// 			$('#nav_reports').hide();
+	// 		}
 			
-			if( curClassifier === "none" ) {
-				$('#retrainInfo').hide();
-			}
+	// 		if( curClassifier === "none" ) {
+	// 			$('#retrainInfo').hide();
+	// 		}
 			
-			// Slide list and classifier list will also be updated by this call
-			updateDatasetList();
-		}
-	});
+	// 		// Slide list and classifier list will also be updated by this call
+	// 		updateDatasetList();
+	// 	}
+	// });
 
 	
 	// Set the update handlers for the selectors
@@ -305,13 +305,19 @@ function updatePyramid() {
 function updateDatasetList() {
 	var	datasetSel = $("#dataset_sel");
 
+	
+
+	
+
 	// Get a list of datasets
 	$.ajax({
-		url: seg_base_url+ "db/getdatasets.php",
+		url: "db/getdatasets.php",
 		data: "",
 		dataType: "json",
 		success: function(data) {
 			
+			//Need to change this to the format I am using...
+
 			for( var item in data ) {
 				datasetSel.append(new Option(data[item][0], data[item][0]));
 			}
@@ -326,7 +332,7 @@ function updateDatasetList() {
 			updateSlideList();
 			
 			// Classifier list needs the current dataset
-			updateClassifierList();
+			//updateClassifierList();
 		}
 	});
 }
@@ -341,6 +347,14 @@ function updateDatasetList() {
 function updateSlideList() {
 	var slideSel = $("#slide_sel");
 	var slideCntTxt = $("#count_patient");
+    // ?console.log("Loading Slide Sets now");
+
+ $.getJSON("db/getdatasets.php").then(function(data) {
+            $.each(data.Collections, function(idx, value) {
+                slideSel.append('<option value="' + value + '" id="' + value + '">' + value + '</option>');
+            })
+        });
+
 
 	// Get the list of slides for the current dataset
 	$.ajax({
@@ -483,16 +497,7 @@ function updateClassifier() {
 			if( classifierSession == false ) {
 				window.onbeforeunload = cleanupClassifierSession; 	
 				classifierSession = true;
-				$.ajax({
-						url: "php/getSession.php",
-						data: "",
-						dataType: "json",
-						success: function(data) {
-			
-							uid = data['uid'];
-						}
-				});
-			}
+				}
 			console.log("Load dataset "+curDataset+" and classifier "+curClassifier);
 			
 			$.ajax({
