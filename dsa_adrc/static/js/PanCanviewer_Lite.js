@@ -294,7 +294,9 @@ function updatePyramid() {
 	heatmapLoaded = false;
 
 	// Zoomer needs '.dzi' appended to the end of the filename
-	pyramid = "DeepZoom="+pyramids[$('#slide_sel').prop('selectedIndex')]+".dzi";
+	//#pyramid = "DeepZoom="+pyramids[$('#slide_sel').prop('selectedIndex')]+".dzi";
+        //I alrady set the .dzi property on the python server side
+	pyramid = pyramids[$('#slide_sel').prop('selectedIndex')];
 	viewer.open(IIPServer + pyramid);
 }
 
@@ -306,7 +308,7 @@ function updateDatasetList() {
 	var	datasetSel = $("#dataset_sel");
 
 	
-
+	console.log('Updating datasets');
 	
 
 	// Get a list of datasets
@@ -331,8 +333,6 @@ function updateDatasetList() {
 			// Need to update the slide list since we set the default slide
 			updateSlideList();
 			
-			// Classifier list needs the current dataset
-			//updateClassifierList();
 		}
 	});
 }
@@ -347,11 +347,21 @@ function updateDatasetList() {
 function updateSlideList() {
 	var slideSel = $("#slide_sel");
 	var slideCntTxt = $("#count_patient");
-    // ?console.log("Loading Slide Sets now");
+    console.log("Loading Slide Sets now");
 
- $.getJSON("db/getdatasets.php").then(function(data) {
-            $.each(data.Collections, function(idx, value) {
-                slideSel.append('<option value="' + value + '" id="' + value + '">' + value + '</option>');
+
+//			slideCntTxt.text(slideCnt);
+
+//			slideSel.empty();
+
+
+	 $.getJSON("db/getslides.php").then(function(data) {
+	console.log(data);
+	console.log("WAS RETURNED??");
+            $.each(data.slide_list, function(idx, value) {
+		console.log(idx,value);
+			
+                slideSel.append('<option value="' + value.slide_name + '" id="' + value + '">' + value.slide_name + '</option>');
             })
         });
 
@@ -472,7 +482,6 @@ function updateDataset() {
 
 	curDataset = $('#dataset_sel').val();
 	updateSlideList();
-	updateClassifierList();
 }
 
 

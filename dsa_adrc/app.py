@@ -4,17 +4,23 @@ from werkzeug.wsgi import DispatcherMiddleware
 from bson.json_util import dumps
 from flask_crossdomains import crossdomain
 import gridfs
-
-import random
+import random, os
 
 import logging
-log = logging.getLogger('werkzeug')
+from collections import OrderedDict
+from flask import Flask, abort, make_response, render_template, url_for
+from io import BytesIO
+import openslide
+from openslide import OpenSlide, OpenSlideError
+from openslide.deepzoom import DeepZoomGenerator
+from optparse import OptionParser
+from threading import Lock
 
+log = logging.getLogger('werkzeug')
 from flask.ext.cache import Cache
 
 #http://stackoverflow.com/questions/18281433/flask-handling-a-pdf-as-its-own-page
 pancan_config = {}
-#pancan_config.slide_db_ptr = 'PanCanDSA_Slide_Data'
 
 import pymongo
 client = pymongo.MongoClient('localhost',27017)
@@ -24,24 +30,12 @@ load_errors_db = client['PanCan_LoadErrors']
 ###Features Database
 dbf = client['PanCan_BoundsOnly']
 
-
 app = Flask('dsa_adrc')
-
 
 # Check Configuring Flask-Cache section for more details
 cache = Cache(app,config={'CACHE_TYPE': 'memcached'})
 dsa_slide_db = client['PanCanDSA_Slide_Data']
 app.config['SLIDE_DIR'] = '/home/lcoop22/Images'   ### DO NOT PUT A TRAILING / after this
-
-from collections import OrderedDict
-from flask import Flask, abort, make_response, render_template, url_for
-from io import BytesIO
-import openslide
-from openslide import OpenSlide, OpenSlideError
-from openslide.deepzoom import DeepZoomGenerator
-import os
-from optparse import OptionParser
-from threading import Lock
 
 SLIDE_DIR = '.'
 SLIDE_CACHE_SIZE = 100
@@ -52,7 +46,6 @@ DEEPZOOM_LIMIT_BOUNDS = True
 DEEPZOOM_TILE_QUALITY = 75
 
 #application = DispatcherMiddleware( { '/backend': backend })
-
 @app.route('/')
 def root():
     return app.send_static_file('index.html')
@@ -70,7 +63,6 @@ def get_slides( coll_name):
     """This will return the list of slides for a given collection aka tumor type """
     return dumps( {'slide_list': dsa_slide_db['PanCanDSA_Slide_Data'].find({'slideGroup': coll_name }) })
 
-
 ##This will process and store files that were marked as bad...
 @app.route('/api/v1/report_bad_image', methods=["POST"])
 def report_bad_images():
@@ -83,6 +75,7 @@ def report_bad_images():
 @app.route('/db/getdatasets.php')
 def mnv_getDatesets():
     """This is a holding spot for Mike's get data sets routine which routes an array of arrays"""
+    print "HI DAVE!!"
     ds = []
     coll_list = dsa_slide_db['PanCanDSA_Slide_Data'].distinct('slideGroup')
     for c in coll_list:
@@ -90,16 +83,28 @@ def mnv_getDatesets():
     return dumps(  ds )
 
 
-##[["GBM-172","GBM\/GBM-lymph-features-172.h5"],["GBM-27","GBM\/GBM-features-27.h5"],["GBM-49","GBM\/GBM-lymph-features-50.h5"],["GBM-88","GBM\/GBM-lymph-features-88.h5"],["GBM-92","GBM\/GBM-features-93.h5"],["LGG-188","LGG\/LGG-features-188.h5"],["LGG-21","LGG\/LGG-features-21.h5"],["LGG-67","LGG\/LGG-features-67.h5"],["LGG-88","LGG\/LGG-features-88.h5"],["SOX2","SOX2\/SOX2-features.h5"]]
 
-@app.route('/db/getslides.php', methods=["POST"])
+@app.route('/db/getslides.php', methods=["POST","GET"])
 def mnv_getSlides():
     """This is a holding spot for Mike's get slide list"""
-    dataset = request.form['dataset']
-    print dataset
-    sl = []
-    return dumps( {'slide_list': dsa_slide_db['PanCanDSA_Slide_Data'].find({'slideGroup': dataset }) })
-#ag return dumps( {'slide_list': dsa_slide_db['PanCanDSA_Slide_Data'].find({'slideGroup': coll_name }) })
+    print "HI DAD!!!","SARC"
+    try:
+        dataset = request.form['dataset']
+    except:
+        dataset = "SARC"
+    slideSet = dsa_slide_db['PanCanDSA_Slide_Data'].find({'slideGroup': dataset})
+
+    slides = []
+    paths = [] 
+    for ss in slideSet:
+        slides.append( ss['slide_name'] )
+        paths.append( ss['slide_w_path'])
+
+    return dumps( { 'slides': slides, 'paths': paths })
+
+#"slide_w_path": 
+
+    #return dumps( {'slide_list': dsa_slide_db['PanCanDSA_Slide_Data'].find({'slideGroup': dataset }) })
 
 @app.route('/db/getnuclei.php', methods=["POST"])
 def getVisibleBoundaries():
