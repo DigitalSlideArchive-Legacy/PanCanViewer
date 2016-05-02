@@ -114,6 +114,8 @@ def getVisibleBoundaries():
     bottom = request.form['bottom'] 
     slide  = request.form['slide']    
     uid = request.form['uid']
+    
+    scaleFactor = 2
     trainSet = 'Not USED'
     print left,right,top,bottom,slide
     
@@ -125,11 +127,16 @@ def getVisibleBoundaries():
     
     fudgeFactor = 2.0
     
-    left = float(left) 
-    right = float(right) 
-    top = float(top)
-    bottom = float(bottom)
 
+    scaleFactor = 0.5
+    #scale factor is related to this being a 20X segmentation on a 40X slide
+    left = float(left) * scaleFactor
+    right = float(right) * scaleFactor
+    top = float(top)   * scaleFactor
+    bottom = float(bottom)  * scaleFactor
+
+
+    ### Need to add in scale factor
 
     boundaryObject=  []
 
@@ -152,20 +159,33 @@ def getVisibleBoundaries():
 
     nucleiAvail = seg_obj_crsr.count()
     print nucleiAvail
-
-    
+#scaleFactor 
+    ### Deal with scaling factor
     if nucleiAvail < 10000:
         for n in seg_obj_crsr:
             obj_bounds = n['Boundaries']
             ### This needs to go from semicolon to space delimited, and also make everything ints
-            boundary_list = obj_bounds.split(';')
-            boundary_string =  " ".join(boundary_list)
-            #boundary_string = boundary_string[:-1]  ##removes the extra space at the end
+            boundary_list = obj_bounds.split(' ')
+                           
+
+            boundary_list_scaled = []
+            boundary_string = ""
+            for x in boundary_list:
+                pt = x.split(",")
+                boundary_string += "%d,%d " % ( int(pt[0])*2,int(pt[1])*2)                
+
+#                print pt
+#               return
+#                boundary_list_scaled.append( "%d,%d" % ( int(pt[0])*2,int(pt[1])*2) )
+
+#            boundary_string =  " ".join(boundary_list_scaled)
+           #boundary_string = boundary_string[:-1]  ##removes the extra space at the end
             b = [boundary_string.encode('utf8'), str(random.randint(1,100000) ), "aqua"]  ### need to give the nuclei a random ID
             boundaryObject.append(b)
-    ##count()
     print "nuclei were found?",nucleiAvail,slide,coll_name
     
+    if boundaryObject:
+        print boundaryObject[0]
     #return 
     ##select boundary, id, centroid_x, centroid_y from boundaries where
     #slide = slide and centroid_x between left and right and centroid_y between top and bottom

@@ -58,9 +58,6 @@ var heatmapLoaded = false;
 var slideReq = null;
 var uncertMin = 0.0, uncertMax = 0.0, classMin = 0.0, classMax = 0.0;
 
-var classifierSession = false;
-
-
 
 // //
 // //	Initialization
@@ -72,10 +69,7 @@ var classifierSession = false;
 // //
 
 
-
-
 $(function() {
-	console.log("I AM HERE NOW?");
 	slideReq = $_GET('slide');
 
 	// Create the slide zoomer, update slide count etc...
@@ -83,7 +77,7 @@ $(function() {
 	//
 	viewer = new OpenSeadragon.Viewer({ showNavigator: true, id: "image_zoomer", prefixUrl: "images/", animationTime: 0.5});
 	console.log("Viewer opened");
-   viewer.addHandler('open-failed', function(evt) {
+       viewer.addHandler('open-failed', function(evt) {
             console.log('tile source opening failed', evt);
         })
 
@@ -105,9 +99,9 @@ $(function() {
 	//console.log('rocking out so far...')
 	fF = 2.0  ; //FudgeFactor
 	annoGrpTransformFunc = ko.computed(function() { 
-					return 'translate(' + svgOverlayVM.annoGrpTranslateX() +
-						', ' + svgOverlayVM.annoGrpTranslateY() +
-					') scale(' + svgOverlayVM.annoGrpScale() + ')';
+					return 'translate(' + svgOverlayVM.annoGrpTranslateX() * fF +
+						', ' + svgOverlayVM.annoGrpTranslateY() *fF +
+					') scale(' + svgOverlayVM.annoGrpScale()  *(fF)+ ')';
 						}, this); 
 	
 	//
@@ -191,8 +185,6 @@ $(function() {
 	$("#slide_sel").change(updateSlide);
 	$("#dataset_sel").change(updateDataset);
 
-	// Set update handler for the heatmap radio buttons
-	$('input[name=heatmapOption]').change(updateHeatmap);
 
 	// Set filter for numeric input
 	$("#x_pos").keydown(filter);
@@ -200,18 +192,6 @@ $(function() {
 
 
 });
-
-
-
-
-
-// function cleanupClassifierSession() {
-
-// 	$.ajax({
-// 		url: "php/endClassifier.php",
-// 		data: ""
-// 	});  
-// }
 
 
 
@@ -390,8 +370,6 @@ function updateDataset() {
 	curDataset = $('#dataset_sel').val();
 	updateSlideList();
 }
-
-
 
 
 //
@@ -573,11 +551,6 @@ function updateSeg() {
 
 
 
-
-
-
-
-
 // function nucleiSelect() {
 
 // 	if( classifierSession == false ) {
@@ -625,36 +598,6 @@ function updateSeg() {
 // 		});
 // 	}
 // }
-
-
-
-
-
-// function retrain() {
-
-// 	// Set iteration to -1 to indicate these are hand-picked
-// 	fixes['iteration'] = -1;
-		
-// 	$.ajax({
-// 		type: "POST",
-// 		url: "php/submitSamples.php",
-// 		dataType: "json",
-// 		data: fixes,
-// 		success: function(result) {
-
-// 			console.log(result);
-			
-// 			// Clear submitted samples 
-// 			fixes['samples'] = [];
-// 			statusObj.samplesToFix(0);
-			
-// 			// Update classification results.
-// 			updateSeg();
-// 		}
-// 	});
-// }
-
-
 
 
 
@@ -777,9 +720,6 @@ function go() {
 
 
 
-
-
-
 //
 // Retruns the value of the GET request variable specified by name
 //
@@ -788,9 +728,6 @@ function $_GET(name) {
 	var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
 	return match && decodeURIComponent(match[1].replace(/\+/g,' ')); 
 }
-
-
-
 
 
 
@@ -1304,23 +1241,3 @@ $(document).ready(function()
 //     });
 
 
-
-//
-//	Display the appropriate heatmap (uncertain or positive class) when
-//	a radio button is selected
-//
-function updateHeatmap() {
-	
-	var ele = document.getElementById('heatmapImg');
-
-	if( $('#heatmapUncertain').is(':checked') ) {
-		ele.setAttribute("xlink:href", "heatmaps/" + uid + "/" + curSlide + ".jpg");
-		document.getElementById('heatMin').innerHTML = uncertMin.toFixed(2);
-		document.getElementById('heatMax').innerHTML = uncertMax.toFixed(2);
-	} else {
-		
-		ele.setAttribute("xlink:href", "heatmaps/" + uid + "/" + curSlide + "_class.jpg");
-		document.getElementById('heatMin').innerHTML = classMin.toFixed(2);
-		document.getElementById('heatMax').innerHTML = classMax.toFixed(2);
-	}
-}
