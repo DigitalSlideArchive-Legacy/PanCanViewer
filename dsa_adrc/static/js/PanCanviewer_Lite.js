@@ -190,7 +190,6 @@ $(function() {
 	// Set the update handlers for the selectors
 	$("#slide_sel").change(updateSlide);
 	$("#dataset_sel").change(updateDataset);
-	$("#classifier_sel").change(updateClassifier);
 
 	// Set update handler for the heatmap radio buttons
 	$('input[name=heatmapOption]').change(updateHeatmap);
@@ -371,42 +370,6 @@ function updateSlideList() {
 
 
 
-
-
-// //
-// //	Updates the classifier selector
-// //
-// function updateClassifierList() {
-// 	var classSel = $("#classifier_sel");
-
-// 	classSel.empty();
-	
-// 	// First selection should be none
-// 	classSel.append(new Option('----------------', 'none'));
-	
-// 	if( uid === null ) {
-// 		$.ajax({
-// 			type: "POST",
-// 			url: "db/getTrainsetForDataset.php",
-// 			data: { dataset: curDataset },
-// 			dataType: "json",
-// 			success: function(data) {
-			
-// 				trainingSets = data;
-// 				for( var item in data['trainingSets'] ) {			
-// 					classSel.append(new Option(data['trainingSets'][item], data['trainingSets'][item]));
-// 				}
-// 			}
-// 		});
-		
-// 	} else {
-// 		classSel.append(new Option('Current', 'current'));		
-// 	}
-// }
-
-
-
-
 //
 //	A new slide has been selected from the drop-down menu, update the 
 // 	slide zoomer.
@@ -414,26 +377,9 @@ function updateSlideList() {
 //
 function updateSlide() {
 	curSlide = $('#slide_sel').val();
-	
-	fixes['samples'] = [];
-	$('#retrainBtn').attr('disabled', 'disabled');
 	updatePyramid();
-
-	if( segDisplayOn ) {
-
-		// Clear heatmap if displayed
-		var heatmapGrp = document.getElementById('heatmapGrp');
-
-		if( heatmapGrp != null ) {
-			heatmapGrp.parentNode.removeChild(heatmapGrp);
-		}
-
-		updateSeg();
-	}
+	if( segDisplayOn ) {updateSeg(); }
 }
-
-
-
 
 
 //
@@ -444,84 +390,6 @@ function updateDataset() {
 	curDataset = $('#dataset_sel').val();
 	updateSlideList();
 }
-
-
-//
-//	Update boundaries, if visible, to the appropriate colors based on
-//	the selected classifier.
-//
-//
-function updateClassifier() {
-
-	var class_sel = document.getElementById('classifier_sel');
-
-
-	curClassifier = class_sel.options[class_sel.selectedIndex].value;
-
- 	if( class_sel.selectedIndex != 0 ) {
-									
-		if( uid === null || classifierSession ) {
-			// No active session, start a classification session
-			//
-			if( classifierSession == false ) {
-				window.onbeforeunload = cleanupClassifierSession; 	
-				classifierSession = true;
-				}
-			console.log("Load dataset "+curDataset+" and classifier "+curClassifier);
-			
-			$.ajax({
-				type: "POST",
-				url: "php/initClassifier.php",
-				data: { dataset: curDataset,
-						trainset: curClassifier },
-				dataType: "json",
-				success: function(data) {
-					var	classNames = data['class_names'];
-
-					box = " <svg width='20' height='20'> <rect width='15' height = '15' style='fill:lightgrey;stroke-width:3;stroke:rgb(0,0,0)'/></svg>";
-					document.getElementById('negLegend').innerHTML = box + " " + classNames[0];
-					box = " <svg width='20' height='20'> <rect width='15' height = '15' style='fill:lime;stroke-width:3;stroke:rgb(0,0,0)'/></svg>";
-					document.getElementById('posLegend').innerHTML = box + " " + classNames[1];
-		
-					$('#retrainInfo').hide();
-					$('#legend').show();
-					$('#heatmap').hide();
-
-					// Need to get the session UID
-					$.ajax({
-						url: "php/getSession.php",
-						data: "",
-						dataType: "json",
-						success: function(data) {
-			
-							uid = data['uid'];
-						}
-					});
-			
-				}
-			});
-		} else {
-			box = " <svg width='20' height='20'> <rect width='15' height = '15' style='fill:lightgrey;stroke-width:3;stroke:rgb(0,0,0)'/></svg>";
-			document.getElementById('negLegend').innerHTML = box + " " + negClass;
-			box = " <svg width='20' height='20'> <rect width='15' height = '15' style='fill:lime;stroke-width:3;stroke:rgb(0,0,0)'/></svg>";
-			document.getElementById('posLegend').innerHTML = box + " " + posClass;
-		
-			$('#retrainInfo').show();
-			$('#legend').show();
-		}
-
-
-	} else {
-	
-		$('#legend').hide();
-	}
-	
-	if( overlayHidden === false ) {
-		updateSeg();
-	}
-}
-
-
 
 
 
@@ -551,9 +419,6 @@ function onImageViewChanged(event) {
 
 	var p = imgHelper.logicalToPhysicalPoint(new OpenSeadragon.Point(0, 0));
 	
-//        p.x=0;
-//        p.y=0;
-
         fudgeFactor = 1.0
 
 	svgOverlayVM.annoGrpTranslateX(p.x*fudgeFactor);
@@ -563,8 +428,6 @@ function onImageViewChanged(event) {
 	var annoGrp = document.getElementById('annoGrp');
 	annoGrp.setAttribute("transform", annoGrpTransformFunc());	
 }
-
-
 
 
 
@@ -594,7 +457,6 @@ function updateSeg() {
 		top = (statusObj.dataportTop() - height > 0) ?	statusObj.dataportTop() - height : 0;
 		bottom = statusObj.dataportBottom() + height;
 		 		
-		var class_sel = document.getElementById('classifier_sel');
                 //console.log('should be doing stuff to update the svg layer in here...');
 	    $.ajax({
 			type: "POST",
@@ -704,63 +566,6 @@ function updateSeg() {
     	});
 	} else {
 
-		// Only display heatmap for active sessions
-		//
-		if( curClassifier != 'none' && classifierSession == false && heatmapLoaded == false ) {
-
-		    $.ajax({
-				type: "POST",
-    	   	 	url: "php/getHeatmap.php",
-    	   	 	dataType: "json",
-				data: { uid:	uid,
-						slide: 	curSlide,
-				},
-
-				success: function(data) {
-
-					data = JSON.parse(data);
-
-					annoGrp = document.getElementById('annoGrp');
-					segGrp = document.getElementById('heatmapGrp');
-
-					if( segGrp != null ) {
-						segGrp.parentNode.removeChild(segGrp);
-					}
-
-					segGrp = document.createElementNS("http://www.w3.org/2000/svg", "g");
-					segGrp.setAttribute('id', 'heatmapGrp');
-					annoGrp.appendChild(segGrp);
-
-					var xlinkns = "http://www.w3.org/1999/xlink";
-					ele = document.createElementNS("http://www.w3.org/2000/svg", "image");
-					ele.setAttributeNS(null, "x", 0);
-					ele.setAttributeNS(null, "y", 0);
-					ele.setAttributeNS(null, "width", data.width);
-					ele.setAttributeNS(null, "height", data.height);
-					ele.setAttributeNS(null, 'opacity', 0.25);
-					ele.setAttribute('id', 'heatmapImg');
-
-					uncertMin = data.uncertMin;
-					uncertMax = data.uncertMax;
-					classMin = data.classMin;
-					classMax = data.classMax;
-
-					if( $('#heatmapUncertain').is(':checked') ) {
-						ele.setAttributeNS(xlinkns, "xlink:href", "heatmaps/"+uid+"/"+data.uncertFilename);
-						document.getElementById('heatMin').innerHTML = data.uncertMin.toFixed(2);
-						document.getElementById('heatMax').innerHTML = data.uncertMax.toFixed(2);
-					} else {
-						ele.setAttributeNS(xlinkns, "xlink:href", "heatmaps/"+uid+"/"+data.classFilename);
-						document.getElementById('heatMin').innerHTML = data.classMin.toFixed(2);
-						document.getElementById('heatMax').innerHTML = data.classMax.toFixed(2);
-					}
-					segGrp.appendChild(ele);
-
-					heatmapLoaded = true;
-					console.log("Uncertainty min: "+uncertMin+", max: "+uncertMax+", median: "+data.uncertMedian);
-				}
-			});
-		}
 	}
 }
 
