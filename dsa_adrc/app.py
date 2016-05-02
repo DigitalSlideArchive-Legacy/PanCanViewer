@@ -123,36 +123,45 @@ def getVisibleBoundaries():
     shim = [25,50,75,100]
     c1 =  "%d,%d %d,%d %d,%d %d,%d"
     
-    left = int(float(left))
-    right = int(float(right))
-    top = int(float(right))
-    bottom = int(float(right))
+    fudgeFactor = 2.0
+    
+    left = float(left) 
+    right = float(right) 
+    top = float(top)
+    bottom = float(bottom)
 
 
     boundaryObject=  []
 
 
-    for x in shim:
-        bound = c1 % ( left+x,top-x, right-x,top-x, right-x,bottom+x,left-x,bottom+x) 
-        boundaryObject.append( [ bound, str(random.randint(1,10000) ), "blue" ])
+#    for x in shim:
+#        bound = c1 % ( left+x,top-x, right-x,top-x, right-x,bottom+x,left-x,bottom+x) 
+#        boundaryObject.append( [ bound, str(random.randint(1,10000) ), "blue" ])
 
-    print boundaryObject
-    return dumps(boundaryObject   )
+#    print boundaryObject
+#    return dumps(boundaryObject   )
  
-    seg_obj_crsr = dbf[coll_name].find( { 'X': {"$gt": int(float(left)), "$lt": int(float(right))},
-                                          'Y': {"$gt": int(float(top)),  "$lt": int(float(bottom))}
-					 })
     
+    coll_name = 'Features.V1.SARC.TCGA-DX-A7EI-01A-01-TSA' ### Hard code this for now
+    seg_obj_crsr = dbf[coll_name].find( { 'X': {"$gt": left, "$lt": right},
+                                      'Y': {"$gt": top,  "$lt": bottom }
+                                    
+                                    }
+                                   )   
+
+
     nucleiAvail = seg_obj_crsr.count()
+    print nucleiAvail
+
     
-    if nucleiAvail < 200:
+    if nucleiAvail < 10000:
         for n in seg_obj_crsr:
             obj_bounds = n['Boundaries']
             ### This needs to go from semicolon to space delimited, and also make everything ints
             boundary_list = obj_bounds.split(';')
             boundary_string =  " ".join(boundary_list)
-            boundary_string = boundary_string[:-1]  ##removes the extra space at the end
-            b = [boundary_string, str(random.randint(1,100000) ), "aqua"]  ### need to give the nuclei a random ID
+            #boundary_string = boundary_string[:-1]  ##removes the extra space at the end
+            b = [boundary_string.encode('utf8'), str(random.randint(1,100000) ), "aqua"]  ### need to give the nuclei a random ID
             boundaryObject.append(b)
     ##count()
     print "nuclei were found?",nucleiAvail,slide,coll_name

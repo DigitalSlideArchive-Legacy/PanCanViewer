@@ -103,12 +103,12 @@ $(function() {
 //dg_svg_layer = viewer.svgOverlay(); 
 
 	//console.log('rocking out so far...')
-	
+	fF = 2.0  ; //FudgeFactor
 	annoGrpTransformFunc = ko.computed(function() { 
-										return 'translate(' + svgOverlayVM.annoGrpTranslateX() +
-										', ' + svgOverlayVM.annoGrpTranslateY() +
-										') scale(' + svgOverlayVM.annoGrpScale() + ')';
-									}, this); 
+					return 'translate(' + svgOverlayVM.annoGrpTranslateX() +
+						', ' + svgOverlayVM.annoGrpTranslateY() +
+					') scale(' + svgOverlayVM.annoGrpScale() + ')';
+						}, this); 
 	
 	//
 	// Image handlers
@@ -185,44 +185,6 @@ $(function() {
 
 	// get slide host info
 	//
-
- //  	$.ajax({
-	// 	url: seg_base_url +"php/getSession.php",
-	// 	data: "",
-	// 	dataType: "json",
-	// 	success: function(data) {
-			
-	// 		uid = data['uid'];
-	// 		classifier = data['className'];
-	// 		posClass = data['posClass'];
-	// 		negClass = data['negClass'];
-	// 		IIPServer = data['IIPServer'];
-	// 		curDataset = data['dataset'];
-			
-	// 		// Don't display the legend until a classifier is selected
-	// 		$('#legend').hide();
-
-	// 		if( uid === null ) {
-	// 			// No active session, don;t allow navigation to select & visualize
-	// 			$('#nav_select').hide();
-	// 			$('#nav_visualize').hide();
-	// 			$('#nav_heatmaps').hide();
-	// 		} else {
-	// 			// Active session, dataset selection not allowed
-	// 			document.getElementById('dataset_sel').disabled = true
-				
-	// 			// No report generation during active session
-	// 			$('#nav_reports').hide();
-	// 		}
-			
-	// 		if( curClassifier === "none" ) {
-	// 			$('#retrainInfo').hide();
-	// 		}
-			
-	// 		// Slide list and classifier list will also be updated by this call
-	// 		updateDatasetList();
-	// 	}
-	// });
 
 	
 	// Set the update handlers for the selectors
@@ -355,15 +317,15 @@ function updateSlideList() {
 //			slideSel.empty();
 
 
-	 $.getJSON("db/getslides.php").then(function(data) {
-	console.log(data);
-	console.log("WAS RETURNED??");
-            $.each(data.slide_list, function(idx, value) {
-		console.log(idx,value);
+	//  $.getJSON("db/getslides.php").then(function(data) {
+	// console.log(data);
+	// console.log("WAS RETURNED??");
+ //            $.each(data.slide_list, function(idx, value) {
+	// 	console.log(idx,value);
 			
-                slideSel.append('<option value="' + value.slide_name + '" id="' + value + '">' + value.slide_name + '</option>');
-            })
-        });
+ //                slideSel.append('<option value="' + value.slide_name + '" id="' + value + '">' + value.slide_name + '</option>');
+ //            })
+ //        });
 
 
 	// Get the list of slides for the current dataset
@@ -479,11 +441,9 @@ function updateSlide() {
 //
 //
 function updateDataset() {
-
 	curDataset = $('#dataset_sel').val();
 	updateSlideList();
 }
-
 
 
 //
@@ -572,7 +532,6 @@ function updateClassifier() {
 //
 //
 function onImageViewChanged(event) {
-        console.log("should be updating the SVG transformation");
 
 	var boundsRect = viewer.viewport.getBounds(true);
 
@@ -592,9 +551,14 @@ function onImageViewChanged(event) {
 
 	var p = imgHelper.logicalToPhysicalPoint(new OpenSeadragon.Point(0, 0));
 	
-	svgOverlayVM.annoGrpTranslateX(p.x);
-	svgOverlayVM.annoGrpTranslateY(p.y);
-	svgOverlayVM.annoGrpScale(statusObj.scaleFactor());	
+//        p.x=0;
+//        p.y=0;
+
+        fudgeFactor = 1.0
+
+	svgOverlayVM.annoGrpTranslateX(p.x*fudgeFactor);
+	svgOverlayVM.annoGrpTranslateY(p.y*fudgeFactor);
+	svgOverlayVM.annoGrpScale(statusObj.scaleFactor()*fudgeFactor);	
 	
 	var annoGrp = document.getElementById('annoGrp');
 	annoGrp.setAttribute("transform", annoGrpTransformFunc());	
@@ -605,77 +569,77 @@ function onImageViewChanged(event) {
 
 
 
-// //
-// //	Retreive the boundaries for nuclei within the viewport bounds and an 
-// //	area surrounding the viewport. The are surrounding the viewport is a
-// //	border the width and height of the viewport. This allows the user to pan a full
-// //	viewport width or height before having to fetch new boundaries.
-// //
-// //
-// function updateSeg() {
+//
+//	Retreive the boundaries for nuclei within the viewport bounds and an 
+//	area surrounding the viewport. The are surrounding the viewport is a
+//	border the width and height of the viewport. This allows the user to pan a full
+//	viewport width or height before having to fetch new boundaries.
+//
+//
+function updateSeg() {
 
-// 	var ele, segGrp, annoGrp;
+	var ele, segGrp, annoGrp;
 
-// 	if( statusObj.scaleFactor() > 0.5 ) {
+	if( statusObj.scaleFactor() > 0.5 ) {
 	
-// 		var left, right, top, bottom, width, height;
+		var left, right, top, bottom, width, height;
 
-// 		// Grab nuclei a viewport width surrounding the current viewport
-// 		//
-// 		width = statusObj.dataportRight() - statusObj.dataportLeft();
-// 		height = statusObj.dataportBottom() - statusObj.dataportTop();
+		// Grab nuclei a viewport width surrounding the current viewport
+		//
+		width = statusObj.dataportRight() - statusObj.dataportLeft();
+		height = statusObj.dataportBottom() - statusObj.dataportTop();
 		
-// 		left = (statusObj.dataportLeft() - width > 0) ?	statusObj.dataportLeft() - width : 0;
-// 		right = statusObj.dataportRight() + width;
-// 		top = (statusObj.dataportTop() - height > 0) ?	statusObj.dataportTop() - height : 0;
-// 		bottom = statusObj.dataportBottom() + height;
+		left = (statusObj.dataportLeft() - width > 0) ?	statusObj.dataportLeft() - width : 0;
+		right = statusObj.dataportRight() + width;
+		top = (statusObj.dataportTop() - height > 0) ?	statusObj.dataportTop() - height : 0;
+		bottom = statusObj.dataportBottom() + height;
 		 		
-// 		var class_sel = document.getElementById('classifier_sel');
-//                 //console.log('should be doing stuff to update the svg layer in here...');
-// 	    $.ajax({
-// 			type: "POST",
-//        	 	url: "db/getnuclei.php",
-//        	 	dataType: "json",
-// 			data: { uid:	uid,
-// 					slide: 	curSlide,
-// 					left:	left,
-// 					right:	right,
-// 					top:	top,
-// 					bottom:	bottom,
-// 					dataset: curDataset,
-// 					trainset: curClassifier
-// 			},
+		var class_sel = document.getElementById('classifier_sel');
+                //console.log('should be doing stuff to update the svg layer in here...');
+	    $.ajax({
+			type: "POST",
+       	 	url: "db/getnuclei.php",
+       	 	dataType: "json",
+			data: { uid:	uid,
+					slide: 	curSlide,
+					left:	left,
+					right:	right,
+					top:	top,
+					bottom:	bottom,
+					dataset: curDataset,
+					trainset: curClassifier
+			},
 		
-// 			success: function(data) {
+			success: function(data) {
 					
-// 					segGrp = document.getElementById('segGrp');
-// 					annoGrp = document.getElementById('anno');
+					segGrp = document.getElementById('segGrp');
+					annoGrp = document.getElementById('anno');
 					
-// 					// Save current viewport location
-// 					boundsLeft = statusObj.dataportLeft();
-// 					boundsRight = statusObj.dataportRight();
-// 					boundsTop = statusObj.dataportTop();
-// 					boundsBottom = statusObj.dataportBottom();
+					// Save current viewport location
+					boundsLeft = statusObj.dataportLeft();
+					boundsRight = statusObj.dataportRight();
+					boundsTop = statusObj.dataportTop();
+					boundsBottom = statusObj.dataportBottom();
 
-// 					// If group exists, delete it
-// 					if( segGrp != null ) {
-// 						segGrp.parentNode.removeChild(segGrp);
-// 					}
+					// If group exists, delete it
+					if( segGrp != null ) {
+						segGrp.parentNode.removeChild(segGrp);
+					}
 
-// 					// Create segment group
-//                     segGrp = document.createElementNS("http://www.w3.org/2000/svg", "g");
-//                     segGrp.setAttribute('id', 'segGrp');
-//                     annoGrp.appendChild(segGrp);
-// 						//console.log('i hope i found data???');
-// 						//console.log(data);
+					// Create segment group
+                    segGrp = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    segGrp.setAttribute('id', 'segGrp');
+                    annoGrp.appendChild(segGrp);
+						//console.log('i hope i found data???');
+						//console.log(data);
 
 
-//    //  This will iterate through all the tiles and color them a different color to show the tile overlays
-// //    $(".tileClass").remove();
-//   //  my_points = contourdata_to_shape(new_geodata, img_width);
-//     //This generates the pretty multicolor tile image
-//    // $.each(my_points, function(k, point_list) {
-//    // });
+   //  This will iterate through all the tiles and color them a different color to show the tile overlays
+//    $(".tileClass").remove();
+  //  my_points = contourdata_to_shape(new_geodata, img_width);
+    //This generates the pretty multicolor tile image
+   // $.each(my_points, function(k, point_list) {
+   // });
 
 // 					for ( cell in data )
 
@@ -701,100 +665,104 @@ function onImageViewChanged(event) {
 // 					}
 
 
-// 					for( cell in data ) {
-// 						ele = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-// 						//console.log(cell);
-// 						//console.log('are there any celllllls???');
-// 						//console.log(data[cell],"is the cell data i think?");
-// 						ele.setAttribute('points', data[cell][0]);
-// 						ele.setAttribute('id', 'N' + data[cell][1]);
-// 						ele.setAttribute('stroke', data[cell][2]);
-// 						ele.setAttribute('fill', 'none');
+
+					items_added = 0;
+					for( cell in data ) {
+				console.log("Should be using mike's code now??");
+						ele = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+						//console.log(cell);
+						//console.log('are there any celllllls???');
+						//console.log(data[cell],"is the cell data i think?");
+						ele.setAttribute('points', data[cell][0]);
+						ele.setAttribute('id', 'N' + data[cell][1]);
+						ele.setAttribute('stroke', data[cell][2]);
+						ele.setAttribute('fill', 'none');
 						
-// 						segGrp.appendChild(ele);
-// 					}
-
-// 					if( panned ) {
-// 						ele = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+						segGrp.appendChild(ele);
+                                           items_added +=1;
+					}
+						console.log(items_added);
+					if( panned ) {
+						ele = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 			
-// 						ele.setAttribute('x', pannedX - 50);
-// 						ele.setAttribute('y', pannedY - 50);
-// 						ele.setAttribute('width', 100);
-// 						ele.setAttribute('height', 100);
-// 						ele.setAttribute('stroke', 'yellow');
-// 						ele.setAttribute('fill', 'none');
-// 						ele.setAttribute('stroke-width', 4);
-// 						ele.setAttribute('id', 'boundBox');
+						ele.setAttribute('x', pannedX - 50);
+						ele.setAttribute('y', pannedY - 50);
+						ele.setAttribute('width', 100);
+						ele.setAttribute('height', 100);
+						ele.setAttribute('stroke', 'yellow');
+						ele.setAttribute('fill', 'none');
+						ele.setAttribute('stroke-width', 4);
+						ele.setAttribute('id', 'boundBox');
 			
-// 						segGrp.appendChild(ele);
-// 					}
+						segGrp.appendChild(ele);
+					}
 					
-// 					if( fixes['samples'].length > 0 ) {
-// 						updateBoundColors();
-// 					}
-//         		}
-//     	});
-// 	} else {
+					if( fixes['samples'].length > 0 ) {
+						updateBoundColors();
+					}
+        		}
+    	});
+	} else {
 
-// 		// Only display heatmap for active sessions
-// 		//
-// 		if( curClassifier != 'none' && classifierSession == false && heatmapLoaded == false ) {
+		// Only display heatmap for active sessions
+		//
+		if( curClassifier != 'none' && classifierSession == false && heatmapLoaded == false ) {
 
-// 		    $.ajax({
-// 				type: "POST",
-//     	   	 	url: "php/getHeatmap.php",
-//     	   	 	dataType: "json",
-// 				data: { uid:	uid,
-// 						slide: 	curSlide,
-// 				},
+		    $.ajax({
+				type: "POST",
+    	   	 	url: "php/getHeatmap.php",
+    	   	 	dataType: "json",
+				data: { uid:	uid,
+						slide: 	curSlide,
+				},
 
-// 				success: function(data) {
+				success: function(data) {
 
-// 					data = JSON.parse(data);
+					data = JSON.parse(data);
 
-// 					annoGrp = document.getElementById('annoGrp');
-// 					segGrp = document.getElementById('heatmapGrp');
+					annoGrp = document.getElementById('annoGrp');
+					segGrp = document.getElementById('heatmapGrp');
 
-// 					if( segGrp != null ) {
-// 						segGrp.parentNode.removeChild(segGrp);
-// 					}
+					if( segGrp != null ) {
+						segGrp.parentNode.removeChild(segGrp);
+					}
 
-// 					segGrp = document.createElementNS("http://www.w3.org/2000/svg", "g");
-// 					segGrp.setAttribute('id', 'heatmapGrp');
-// 					annoGrp.appendChild(segGrp);
+					segGrp = document.createElementNS("http://www.w3.org/2000/svg", "g");
+					segGrp.setAttribute('id', 'heatmapGrp');
+					annoGrp.appendChild(segGrp);
 
-// 					var xlinkns = "http://www.w3.org/1999/xlink";
-// 					ele = document.createElementNS("http://www.w3.org/2000/svg", "image");
-// 					ele.setAttributeNS(null, "x", 0);
-// 					ele.setAttributeNS(null, "y", 0);
-// 					ele.setAttributeNS(null, "width", data.width);
-// 					ele.setAttributeNS(null, "height", data.height);
-// 					ele.setAttributeNS(null, 'opacity', 0.25);
-// 					ele.setAttribute('id', 'heatmapImg');
+					var xlinkns = "http://www.w3.org/1999/xlink";
+					ele = document.createElementNS("http://www.w3.org/2000/svg", "image");
+					ele.setAttributeNS(null, "x", 0);
+					ele.setAttributeNS(null, "y", 0);
+					ele.setAttributeNS(null, "width", data.width);
+					ele.setAttributeNS(null, "height", data.height);
+					ele.setAttributeNS(null, 'opacity', 0.25);
+					ele.setAttribute('id', 'heatmapImg');
 
-// 					uncertMin = data.uncertMin;
-// 					uncertMax = data.uncertMax;
-// 					classMin = data.classMin;
-// 					classMax = data.classMax;
+					uncertMin = data.uncertMin;
+					uncertMax = data.uncertMax;
+					classMin = data.classMin;
+					classMax = data.classMax;
 
-// 					if( $('#heatmapUncertain').is(':checked') ) {
-// 						ele.setAttributeNS(xlinkns, "xlink:href", "heatmaps/"+uid+"/"+data.uncertFilename);
-// 						document.getElementById('heatMin').innerHTML = data.uncertMin.toFixed(2);
-// 						document.getElementById('heatMax').innerHTML = data.uncertMax.toFixed(2);
-// 					} else {
-// 						ele.setAttributeNS(xlinkns, "xlink:href", "heatmaps/"+uid+"/"+data.classFilename);
-// 						document.getElementById('heatMin').innerHTML = data.classMin.toFixed(2);
-// 						document.getElementById('heatMax').innerHTML = data.classMax.toFixed(2);
-// 					}
-// 					segGrp.appendChild(ele);
+					if( $('#heatmapUncertain').is(':checked') ) {
+						ele.setAttributeNS(xlinkns, "xlink:href", "heatmaps/"+uid+"/"+data.uncertFilename);
+						document.getElementById('heatMin').innerHTML = data.uncertMin.toFixed(2);
+						document.getElementById('heatMax').innerHTML = data.uncertMax.toFixed(2);
+					} else {
+						ele.setAttributeNS(xlinkns, "xlink:href", "heatmaps/"+uid+"/"+data.classFilename);
+						document.getElementById('heatMin').innerHTML = data.classMin.toFixed(2);
+						document.getElementById('heatMax').innerHTML = data.classMax.toFixed(2);
+					}
+					segGrp.appendChild(ele);
 
-// 					heatmapLoaded = true;
-// 					console.log("Uncertainty min: "+uncertMin+", max: "+uncertMax+", median: "+data.uncertMedian);
-// 				}
-// 			});
-// 		}
-// 	}
-// }
+					heatmapLoaded = true;
+					console.log("Uncertainty min: "+uncertMin+", max: "+uncertMax+", median: "+data.uncertMedian);
+				}
+			});
+		}
+	}
+}
 
 
 
@@ -889,13 +857,13 @@ function onImageViewChanged(event) {
 // // ===============	Mouse event handlers for viewer =================
 // //
 
-// //
-// //	Mouse enter event handler for viewer
-// //
-// //
-// function onMouseEnter(event) {
-// 	statusObj.haveMouse(true);
-// }
+//
+//	Mouse enter event handler for viewer
+//
+//
+function onMouseEnter(event) {
+	statusObj.haveMouse(true);
+}
 
 
 //
@@ -1345,6 +1313,14 @@ ko.applyBindings(vm);
 //     }
 
 //     window.onresize = handleResize;
+
+$(document).ready(function() 
+	{
+
+
+	updateDatasetList();
+
+	});
 
 
 //      $(document).ready(function() {
