@@ -16,8 +16,11 @@
         <link rel="stylesheet" media="screen" href="css/mnv/bootstrap.min.css"/>
         <link rel="stylesheet" media="screen" href="css/mnv/style.css"/>
 
-<script src="bower_components/d3/d3.js"></script>
+        <script src="bower_components/d3/d3.js"></script>
 
+        <!-- Using CDN's until I finalize build ocess -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2/js/select2.min.js"></script>
 
    <!--  <script src="bower_components/jquery-ui/jquery-ui.js"></script>
     <script src="bower_components/openseadragon/built-openseadragon/openseadragon/openseadragon.min.js"></script>
@@ -34,7 +37,7 @@
     <!--   <link rel="stylesheet" type="text/css" media="screen" href="css/mnviewer_style.css"> -->
   <!--   <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.min.js" type="text/javascript"></script> -->
     <!-- really should move to bootstrap3 -->
-  <!--   <script src="js/bootstrap.min.js" type="text/javascript"></script> -->
+
 <!--     <script src="js/jquery.dataTables.min.js" type="text/javascript"></script> -->
   <!--   <script src="js/openseadragon_setup_functions.js"></script>
  -->
@@ -70,7 +73,7 @@
                     </div>
                     
                     <h5>Select Slide: </h5>
-                    <select id="slide_sel"></select>
+                    <select id="slide_sel" style="width: 75%"></select>
                     
                     <p>
                         <br/>
@@ -106,24 +109,27 @@
 
 
                 <div class="col-sm-4 col-md-4 col-lg-4" id="legend">
-                    
+                     <input type="button" id="btn_1" value="Show Segmentation" class="btn btn-default btn-sm" onClick="viewSegmentation()">
                     
                 </div>
                                     
             </div>  <!-- First row -->
 
-            <div class="row">   <!-- Buttons -->
-                <div class="col-sm-8 col-md-8 col-lg-8">
-                    <!-- Buttons along top of zoomer -->
-                    <input type="button" id="btn_1" value="Show Segmentation" class="btn btn-default btn-sm" onClick="viewSegmentation()">
-                </div>
-                    <!-- Buttons along top of zoomer -->
-                                   
-            </div>  <!-- Second row (buttons) -->
-
             <div class="row top-buffer"></div>   <!-- A little space between -->            
             
             <div class="row-fluid"> <!-- Slide viewer -->
+               
+                <div class="btn-group"> <!-- buttons for the top of the slide viewer-->
+                    <input type="button" id="show_filter" value="Apply Filters" class="btn btn-small btn-inverse" disabled>
+                    <input type="button" id="report_bad_image_btn" value="Report Bad Image" class="btn btn-small btn-inverse" disabled>
+                    <input type="button" id="show_debug" value="Show Debug Info" class="btn btn-small btn-inverse">
+                    <input type="button" id="show_annotator" value="Draw Tools" class="btn btn-small btn-inverse" disabled>
+                    <input type="button" id="show_metadata" value="Query Metadata" class="btn btn-small btn-inverse" disabled>
+                    <input type="button" id="show_pdf" value="Path Report" class="btn btn-small btn-inverse" disabled>
+                </div>
+               
+
+
                 <div id="imageViewerContainer" class="relative-fill-container">
                     <div id="image_zoomer" class="openseadragon-view"></div>
                     <svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="overlaySvg" data-bind="withL svgOverlayVM" 

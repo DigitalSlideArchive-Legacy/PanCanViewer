@@ -97,11 +97,11 @@ $(function() {
 //dg_svg_layer = viewer.svgOverlay(); 
 
 	//console.log('rocking out so far...')
-	fF = 2.0  ; //FudgeFactor
+	//fF = 2.0  ; //FudgeFactor
 	annoGrpTransformFunc = ko.computed(function() { 
-					return 'translate(' + svgOverlayVM.annoGrpTranslateX() * fF +
-						', ' + svgOverlayVM.annoGrpTranslateY() *fF +
-					') scale(' + svgOverlayVM.annoGrpScale()  *(fF)+ ')';
+					return 'translate(' + svgOverlayVM.annoGrpTranslateX() +
+						', ' + svgOverlayVM.annoGrpTranslateY() +
+					') scale(' + svgOverlayVM.annoGrpScale() + ')';
 						}, this); 
 	
 	//
@@ -397,11 +397,9 @@ function onImageViewChanged(event) {
 
 	var p = imgHelper.logicalToPhysicalPoint(new OpenSeadragon.Point(0, 0));
 	
-        fudgeFactor = 1.0
-
-	svgOverlayVM.annoGrpTranslateX(p.x*fudgeFactor);
-	svgOverlayVM.annoGrpTranslateY(p.y*fudgeFactor);
-	svgOverlayVM.annoGrpScale(statusObj.scaleFactor()*fudgeFactor);	
+	svgOverlayVM.annoGrpTranslateX(p.x);
+	svgOverlayVM.annoGrpTranslateY(p.y);
+	svgOverlayVM.annoGrpScale(statusObj.scaleFactor());	
 	
 	var annoGrp = document.getElementById('annoGrp');
 	annoGrp.setAttribute("transform", annoGrpTransformFunc());	
