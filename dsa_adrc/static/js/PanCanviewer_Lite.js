@@ -35,6 +35,7 @@ var IIPServer="";
 var slideCnt = 0;
 var curSlide = "";
 var curDataset = "";
+var curDataset = null;
 var curClassifier = "none";
 
 var viewer = null;
@@ -246,9 +247,8 @@ function updatePyramid() {
 //	Updates the dataset selector
 //
 function updateDatasetList() {
-	var	datasetSel = $("#dataset_sel");
 
-	
+	var	datasetSel = $("#dataset_sel");
 	console.log('Updating datasets');
 	
 
@@ -260,6 +260,10 @@ function updateDatasetList() {
 		success: function(data) {
 			
 			//Need to change this to the format I am using...
+			console.log("Data sets haev been retrieved from the server...");
+			console.log(data);
+			console.log(curDataset);
+
 
 			for( var item in data ) {
 				datasetSel.append(new Option(data[item][0], data[item][0]));
@@ -267,11 +271,15 @@ function updateDatasetList() {
 
 			if( curDataset === null ) {
 				curDataset = data[0][0];		// Use first dataset initially
+				console.log("Setting current data sets....");
+				console.log(curDataset);
 			} else {
 				datasetSel.val(curDataset);
 			}
 									
 			// Need to update the slide list since we set the default slide
+			//Should be updating the slide list now
+			console.log('Just finished laoding the main data set, now loading the slides');
 			updateSlideList();
 			
 		}
@@ -289,7 +297,8 @@ function updateSlideList() {
 	var slideSel = $("#slide_sel");
 	var slideCntTxt = $("#count_patient");
     console.log("Loading Slide Sets now");
-
+	console.log(curDataset);
+	console.log("Should have just pushed the dataset...");
 
 //			slideCntTxt.text(slideCnt);
 
@@ -1057,7 +1066,7 @@ ko.applyBindings(vm);
 $(document).ready(function() 
 	{
 
-
+	console.log('Loading main data set now');
 	updateDatasetList();
 
 	});
