@@ -35,7 +35,8 @@ app = Flask('dsa_adrc')
 # Check Configuring Flask-Cache section for more details
 cache = Cache(app,config={'CACHE_TYPE': 'memcached'})
 dsa_slide_db = client['PanCanDSA_Slide_Data']
-app.config['SLIDE_DIR'] = '/home/lcoop22/Images'   ### DO NOT PUT A TRAILING / after this
+app.config['SLIDE_DIR'] = '/TCGA_MIRROR/TCGA_FLAT'   ### DO NOT PUT A TRAILING / after this
+
 
 SLIDE_DIR = '.'
 SLIDE_CACHE_SIZE = 100

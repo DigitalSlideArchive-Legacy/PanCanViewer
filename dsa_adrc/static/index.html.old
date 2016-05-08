@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset = UTF-8">
+    <title>DSA Viewer</title>
+    <!-- bower:css -->
+    <!-- endbower -->
+    <!-- bower:js -->
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="bower_components/jquery-ui/jquery-ui.js"></script>
+    <script src="bower_components/openseadragon/built-openseadragon/openseadragon/openseadragon.min.js"></script>
+    <!-- endbower -->
+    <script src="bower_components/d3/d3.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="css/jquery-ui.min.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="css/jquery-ui.theme.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="css/jquery-ui.structure.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="css/jquery.dataTables.css" />
+    <link ref="stylesheet" type="text/css" media="screen" href="css/pancan.css" />
+
+
+    <link href="css/bootstrap-switch.css" rel="stylesheet" media="screen">
+    <!--   <link rel="stylesheet" type="text/css" media="screen" href="css/mnviewer_style.css"> -->
+    <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.min.js" type="text/javascript"></script>
+    <!-- really should move to bootstrap3 -->
+    <script src="js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="js/jquery.dataTables.min.js" type="text/javascript"></script>
+    <script src="js/openseadragon_setup_functions.js"></script>
+    <script src="js/colornames_to_hex_hash.js"></script>
+    <script src="js/mousetrap.min.js"></script>
+    <script type="text/javascript" src="js/annotations.js"></script>
+    <script type="text/javascript" src="js/annotationState_control_functions.js"></script>
+    <script type="text/javascript" src="js/bootstrap-switch.js"></script>
+    <script type="text/javascript" src="js/colornames_to_hex_hash.js"></script>
+    <script type="text/javascript" src="osd-filters/osd_filters.js"></script>
+    <script src="js/openseadragon-imaginghelper.min.js"></script>
+    <script src="js/openseadragon-viewerinputhook.min.js"></script>
+    <script src="js/knockout-3.1.0.js"></script>
+    <script type="text/javascript" src="js/openseadragon-svg-overlay.js"></script>
+</head>
+
+<body>
+    <script>
+    //base_host = "http://cancer.digitalslidearchive.emory.edu"
+    base_host = ""
+        //Defining urls for data grab functions
+    datagroup_apiurl = base_host + '/api/v1/collections';
+    //Change this image to be dyanmic loaded from a config.json file
+    </script>
+    <div class="navbar">
+        <div class="navbar-inner">
+            <div class="container">
+                <a class="brand" href="#">
+                    <img src="img/CDSA_Slide_50.png" style="float:left" height="25" width="75" />&emsp;PanCan Digital Slide Viewer</a>
+                <ul class="nav">
+                    <li class="active"><a href="#">Home</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+        
+
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="span3" id="sel_image_frame">
+                <div id="sel_image" class="">
+                    <div class="control-group" id="sel_patient">
+                        <label class="control-label" for="data_group">Select Patient</label>
+                        <div class="controls">
+                            <select id="data_group" class="input"></select>
+                            <span class="help-inline">Available Slides:
+                                <span id="count_patient"></span>
+                            <div data-bind="with: statusObj">
+                                <span>Mouse Pos: </span>
+                                <span>(</span>
+                                <span data-bind="text:(haveImage() &&  haveMouse()) ? mouseImgX().toFixed(0) : '-'"></span>
+                                <span>, </span>
+                    <span data-bind="text:(haveImage() &&  haveMouse()) ? mouseImgY().toFixed(0) : '-'"></span>
+                                <span>)</span>
+                            </div>
+                            </span>
+                        </div>
+                    </div>
+                    <div id="sel_image_scroll">
+                        <div id="dynamic"></div>
+                        <div class="spacer"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="span8" id="zoom_frame">
+                <div class="btn-group">
+                    <input type="button" id="show_filter" value="Apply Filters" class="btn btn-small btn-inverse" disabled>
+                    <input type="button" id="show_debug" value="Show Debug Info" class="btn btn-small btn-inverse">
+                    <input type="button" id="btn_1" value="Show Segmentation" class="btn btn-default btn-sm" onClick="viewSegmentation()">
+                </div>
+                <div class="row-fluid">
+                    <!-- Slide viewer -->
+                    <div id="imageViewerContainer" class="relative-fill-container">
+                        <div id="image_zoomer" class="openseadragon-view"></div>
+                        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="overlaySvg" data-bind="withL svgOverlayVM" visibility="hidden" pointer-events="none" zoomAndPan="disable">
+                            <defs></defs>
+                            <!-- TODO - Can't get the binding to work with the transform function.
+                                                         Currently applying the transform manually in onImageViewChanged
+                                                -->
+                            <g id="annoGrp" class="svgAnnoGrp" data-bind="attr: {transform: annoGrpTransformFunc}">
+                                <g id="anno"></g>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="clear:both"></div>
+    <div class="" id="status_bar">Main Status Bar</div>
+    <!-- This serves as the landing spot for the SVG color filter code -->
+    <div id="debug_dialog">
+        <span id="mouse_nav_box">
+            <div id="wsi_toolbar ">
+                <table id="output " style="border:1px solid black; float:right ">
+                    <tr>
+                        <th class="name ">&nbsp;</th>
+                        <th class="value ">Pixels</th>
+                        <th class="value ">Points</th>
+                    </tr>
+                    <tr>
+                        <th>Mouse position</th>
+                        <td id="mousePixels">-</td>
+                        <td id="mousePoints">-</td>
+                    </tr>
+                    <tr>
+                        <th>Image Size</th>
+                        <td id="dziSizePixels">-</td>
+                        <td id="dziSizePoints"></td>
+                    </tr>
+                </table>
+        </span>
+    </div>
+    <script src="js/PanCanviewer_Lite.js"></script>
+</body>
+
+</html>
