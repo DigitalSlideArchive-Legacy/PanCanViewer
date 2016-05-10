@@ -28,7 +28,7 @@ console.log("loading CS Lite viewer.js");
 
 
 
-var seg_base_url = "http://turing.cci.emory.edu/VALS/"
+//var seg_base_url = "http://turing.cci.emory.edu/VALS/"
 
 var annoGrpTransformFunc;
 var IIPServer="";
@@ -37,6 +37,10 @@ var curSlide = "";
 var curDataset = "";
 var curDataset = null;
 var curClassifier = "none";
+
+
+var curSlideInfo = {}  ; //This object stores state information and properties for the current slide
+
 
 var viewer = null;
 var imgHelper = null, osdCanvas = null, viewerHook = null;
@@ -223,7 +227,6 @@ function filter(event) {
 	}
 }
 
-
  
 //
 //	Get the url for the slide pyramid and set the viewer to display it
@@ -231,9 +234,21 @@ function filter(event) {
 //
 function updatePyramid() {
 
+	 curSlideInfo['curDataset'] = curDataset;
+         curSlideInfo['curSlide'] = curSlide;
+
+	updateSlideInfo() ; //Likely will refactor this; this object should get all of the associated metadata for the current slide
+
+
+
+
 	slide = "";
 	panned = false;
 	heatmapLoaded = false;
+
+	//Adding in some logic right here to get the number of objects segmented on this
+        console.log('Loading segmented objects ...');
+
 
 	// Zoomer needs '.dzi' appended to the end of the filename
 	//#pyramid = "DeepZoom="+pyramids[$('#slide_sel').prop('selectedIndex')]+".dzi";
@@ -241,6 +256,39 @@ function updatePyramid() {
 	pyramid = pyramids[$('#slide_sel').prop('selectedIndex')];
 	viewer.open(IIPServer + pyramid);
 }
+
+
+//Updates the curSlideInfo which contains slide properties and metadata about the currently selected slide
+function updateSlideInfo() 
+	{
+	
+	console.log("Updating slide info");
+  $.ajax({
+                url: "db/getslideinfo.php",
+		method: 'POST',
+                data: curSlideInfo,
+                curSlide: curSlideInfo.curSlide,
+				curDataset: curSlideInfo.curDataset,
+
+                dataType: "json",
+                success: function(data) {
+
+                        //Need to change this to the format I am using...
+			console.log('Should be updating the curslideinfo with additional properties');
+			console.log(data)
+
+			curSlideInfo = data;
+			//Would love to bind some properties as well the the valObject
+
+			slideInfoObj.slideWidth( data.width);
+			slideInfoObj.slideHeight( data.height);
+
+                }
+        });
+
+
+
+	}
 
 
 //
@@ -772,9 +820,21 @@ var svgOverlayVM = {
 	annoGrpTransform:	annoGrpTransformFunc
 };
 
+var slideInfoObj = {
+
+		slidename: ko.observable(null),
+		slideWidth: ko.observable(0),
+		slideHeight: ko.observable(0)
+
+
+		}
+
+
+
 var vm = {
 	statusObj:	ko.observable(statusObj),
-	svgOverlayVM: ko.observable(svgOverlayVM)
+	svgOverlayVM: ko.observable(svgOverlayVM),
+	slideInfoObj: ko.observable(slideInfoObj)
 };
 
 
@@ -1068,6 +1128,10 @@ $(document).ready(function()
 
 	console.log('Loading main data set now');
 	updateDatasetList();
+
+	$("#slide_sel").select2();
+	$("#dataset_sel").select2()
+
 
 	});
 

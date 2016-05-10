@@ -1,2 +1,2 @@
 from dsa_adrc import app
-app.run(host='0.0.0.0', port=5060, debug=True,threaded=True)
+app.run(host='0.0.0.0', port=5061, debug=True,threaded=True)

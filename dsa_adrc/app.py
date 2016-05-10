@@ -24,18 +24,19 @@ pancan_config = {}
 
 import pymongo
 client = pymongo.MongoClient('localhost',27017)
-slide_db_ptr = client['PanCanDSA_Slide_Data']
 load_errors_db = client['PanCan_LoadErrors']
 
 ###Features Database
 dbf = client['PanCan_BoundsOnly']
-
 app = Flask('dsa_adrc')
 
 # Check Configuring Flask-Cache section for more details
 cache = Cache(app,config={'CACHE_TYPE': 'memcached'})
-dsa_slide_db = client['PanCanDSA_Slide_Data']
-app.config['SLIDE_DIR'] = '/TCGA_MIRROR/TCGA_FLAT'   ### DO NOT PUT A TRAILING / after this
+dsa_slide_db = client['PanCanDSA_Slide_Data_N15']  ###  THIS IS THE DATABASE ITSELF--- NOT THE COLLECTION NAME
+
+DSA_Slide_Info  = dsa_slide_db['PanCanDSA_Slide_Data']  ### This is the collection that lists the groups and slides in each group
+
+app.config['SLIDE_DIR'] = '/bigdata/PanCan_Images'   ### DO NOT PUT A TRAILING / after this
 
 
 SLIDE_DIR = '.'
@@ -46,7 +47,6 @@ DEEPZOOM_OVERLAP = 1
 DEEPZOOM_LIMIT_BOUNDS = True
 DEEPZOOM_TILE_QUALITY = 75
 
-#application = DispatcherMiddleware( { '/backend': backend })
 @app.route('/')
 def root():
     return app.send_static_file('index.html')
@@ -55,14 +55,14 @@ def root():
 @app.route('/api/v1/collections')
 @crossdomain(origin='*')
 def get_collections():
-    coll_list = dsa_slide_db['PanCanDSA_Slide_Data'].distinct('slideGroup')
-    return jsonify( { 'Collections': sorted(coll_list) })
+    cl = DSA_Slide_Info.distinct('slideGroup')
+    return jsonify( { 'Collections': sorted(cl) })
 
 @app.route('/api/v1/collections/slides/<string:coll_name>')
 @crossdomain(origin='*')
 def get_slides( coll_name):
     """This will return the list of slides for a given collection aka tumor type """
-    return dumps( {'slide_list': dsa_slide_db['PanCanDSA_Slide_Data'].find({'slideGroup': coll_name }) })
+    return dumps( {'slide_list': DSA_Slide_Info.find({'slideGroup': coll_name }) })
 
 ##This will process and store files that were marked as bad...
 @app.route('/api/v1/report_bad_image', methods=["POST"])
@@ -76,13 +76,11 @@ def report_bad_images():
 @app.route('/db/getdatasets.php')
 def mnv_getDatesets():
     """This is a holding spot for Mike's get data sets routine which routes an array of arrays"""
-    print "HI DAVE!!"
     ds = []
-    coll_list = dsa_slide_db['PanCanDSA_Slide_Data'].distinct('slideGroup')
+    coll_list = DSA_Slide_Info.distinct('slideGroup')
     for c in coll_list:
         ds.append( [c,c] )
     return dumps(  ds )
-
 
 
 @app.route('/db/getslides.php', methods=["POST","GET"])
@@ -92,7 +90,7 @@ def mnv_getSlides():
         dataset = request.form['dataset']
     except:
         dataset = "SARC"
-    slideSet = dsa_slide_db['PanCanDSA_Slide_Data'].find({'slideGroup': dataset})
+    slideSet = DSA_Slide_Info.find({'slideGroup': dataset})
 
     slides = []
     paths = [] 
@@ -101,6 +99,26 @@ def mnv_getSlides():
         paths.append( ss['slide_w_path'])
 
     return dumps( { 'slides': slides, 'paths': paths })
+
+@app.route('/db/getslideinfo.php', methods=["POST","GET"])
+def getSlideInfo():
+    """This will return all the known info / facets for a particular slide; I will use this object
+    to tell me if there's a path report, if there's radiology, if there's annotations, etc etc..."""
+
+    ### Collection name is a combination of the tumor type and the base part of teh slide name... right now we are ignoring the
+    ### stuff after the TSA..
+    #filename=request.form['filename']
+    try:
+        curDataset =  request.form['curDataset']
+        curSlide = request.form['curSlide']
+    
+    except:
+        curDataset = 'GBM'
+        curSlide = 'TCGA-3B-A9H1-01A-01-TS1'
+
+    sample_rec = DSA_Slide_Info.find_one({'slide_name': {"$regex": curSlide}  })
+                                             
+    return dumps(sample_rec)
 
 
 @app.route('/db/getnuclei.php', methods=["POST"])
@@ -112,12 +130,16 @@ def getVisibleBoundaries():
     slide  = request.form['slide']    
     uid = request.form['uid']
     
+
+    dataset = request.form['dataset'] #  The data set is basically the slideSet;  need to make these consistent
+
+
     scaleFactor = 2
     trainSet = 'Not USED'
     print left,right,top,bottom,slide
     
     #slide = 'TCGA-DX-AB2V-01Z-00-DX3'
-    coll_name = "Features.V1.SARC.%s" % slide
+    coll_name = "Features.V1.%s.%s" % (dataset, slide )
     
     c1 =  "%d,%d %d,%d %d,%d %d,%d"
     
@@ -139,7 +161,7 @@ def getVisibleBoundaries():
                                     })
                                    
     nucleiAvail = seg_obj_crsr.count()
-    if nucleiAvail < 10000:
+    if nucleiAvail < 20000:
         for n in seg_obj_crsr:
             obj_bounds = n['Boundaries']
             ### This needs to go from semicolon to space delimited, and also make everything ints
@@ -155,11 +177,10 @@ def getVisibleBoundaries():
 
             b = [boundary_string.encode('utf8'), str(random.randint(1,100000) ), "aqua"]  ### need to give the nuclei a random ID
             boundaryObject.append(b)
-    print "nuclei were found?",nucleiAvail,slide,coll_name
+    #print "nuclei were found?",nucleiAvail,slide,coll_name
     
     if boundaryObject:
         print boundaryObject[0]
-    
     return dumps(boundaryObject)
 
 @app.route('/static/<path:path>')
@@ -177,7 +198,6 @@ def static_file(path):
 @cache.cached()
 def getThumbnail(path):
     """This will return the 0/0 tile later whch in the case of an SVS image is actually the thumbnail..... """
-    #print "Looking in ",path,'for thumbnail.... which sould be expanded  I hope'
 
     path = os.path.abspath(os.path.join(app.basedir, path))
     osr = OpenSlide(path)
@@ -202,6 +222,7 @@ def getThumbnail(path):
 @crossdomain(origin='*')
 @cache.cached()
 def dzi(path):
+    print "Path for the DZIMS SCRIPT IS",path
     slide = _get_slide(path)
     format = 'jpeg'
 #    format = app.config['DEEPZOOM_FORMAT']
@@ -226,7 +247,6 @@ def tile(path, level, col, row, format):
         abort(404)
     buf = PILBytesIO()
     
-
 #   tile.save(buf, format, quality=app.config['DEEPZOOM_TILE_QUALITY'])
     tile.save(buf, 'jpeg', quality=90)
     resp = make_response(buf.getvalue())
@@ -301,8 +321,9 @@ def _setup():
 
 def _get_slide(path):
     path = os.path.abspath(os.path.join(app.basedir, path))
-    #print path,"Is where I am looking";
 
+
+    ## I NEED TO ADD THIS BACK
     if not path.startswith(app.basedir + os.path.sep):
         # Directory traversal
         print os.path.sep,"is the separator??",app.basedir
@@ -310,7 +331,6 @@ def _get_slide(path):
         abort(404)
     if not os.path.exists(path):
         print "failing at the second part"
-
         abort(404)
     try:
         slide = app.cache.get(path)
